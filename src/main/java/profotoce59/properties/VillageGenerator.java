@@ -63,6 +63,7 @@ public class VillageGenerator extends Generator {
         if(!biomeWanted.equals(biome))return false;
         else return this.generate(generator,chunkX,chunkZ,rand);
     }
+
     @Override
     public boolean generate(TerrainGenerator generator, int chunkX, int chunkZ, ChunkRand rand) {
         Biome biome = generator.getBiomeSource().getBiomeForNoiseGen((chunkX << 2) + 2, 0, (chunkZ << 2) + 2);
@@ -83,6 +84,14 @@ public class VillageGenerator extends Generator {
         if(!superflat && !village.canGenerate(chunkX, chunkZ, generator)){
             return false;
         }
+
+        return this.generateWithIgnoreBiome(generator, chunkX, chunkZ, rand, this.villageType);
+    }
+
+    public boolean generateWithIgnoreBiome(TerrainGenerator generator, int chunkX, int chunkZ, ChunkRand rand, VillageType villageType) {
+        if (this.pieces == null) pieces = new ArrayList<>();
+        else this.pieces.clear();
+        this.villageType = villageType;
 
         rand.setCarverSeed(generator.getWorldSeed(), chunkX, chunkZ, generator.getVersion());
         BlockRotation rotation = BlockRotation.getRandom(rand);
