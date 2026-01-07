@@ -159,11 +159,16 @@ public class VillageGenerator extends Generator {
 
         boolean confident = true;
 
+        // Modify rng for ranked seed filter
+        ChunkRand lootRand = new ChunkRand();
+
         // Numbers taken from 1.16.5 and 1.15
         if(generator.getVersion().isOlderThan(MCVersion.v1_16)){
             rand.setDecoratorSeed(populationSeed, 9, 3, generator.getVersion());
+            lootRand.setDecoratorSeed(populationSeed, 9, 3, generator.getVersion());
         } else {
             rand.setDecoratorSeed(populationSeed, 11, 4, generator.getVersion());
+            lootRand.setDecoratorSeed(populationSeed, 11, 4, generator.getVersion());
         }
         Iterator<Piece> iterator = generationPieces.iterator();
         while(iterator.hasNext()) {
@@ -172,7 +177,7 @@ public class VillageGenerator extends Generator {
                 confident = false;
             }
             if (piece.box.intersects(chunkBox)){
-                if(!piece.place(rand, generator, confident, chunkBox)){
+                if(!piece.place(rand, generator, confident, chunkBox, lootRand)){
                     iterator.remove();
                 }
             }
@@ -256,7 +261,7 @@ public class VillageGenerator extends Generator {
             return list;
         }
 
-        public boolean place(ChunkRand rand, OverworldTerrainGenerator otg, boolean confident, BlockBox boundingBox){
+        public boolean place(ChunkRand rand, OverworldTerrainGenerator otg, boolean confident, BlockBox boundingBox, ChunkRand lootRand){
             return switch(type){
                 case Empty -> true;
                 case Feature -> switch (name){
@@ -286,16 +291,15 @@ public class VillageGenerator extends Generator {
                     for (int i = 0; i < tables.size(); i++) {
                         BPos offset = VillageStructureLoot.STRUCTURE_LOOT_OFFSETS.get(name).get(i);
                         if(boundingBox.contains(pos.add(getTransformedPos(offset, rotation)))) {
-                            long lootTableSeed = rand.nextLong();
-                            //If we have generated a feature this chunk, don't add the loot. We're not confident enough.
-                            if (confident) {
-                                //Generate the loot only if we're not talking about barrels
-                                if(tables.get(i)!= MCLootTables.NULL) {
-                                    tables.get(i).apply(otg.getVersion());
-                                    loot.addAll(tables.get(i)
+                            // Modify rng for ranked seed filter
+                            rand.nextLong();
+                            long lootTableSeed = lootRand.nextLong();
+
+                            if(tables.get(i) != MCLootTables.NULL) {
+                                tables.get(i).apply(otg.getVersion());
+                                loot.addAll(tables.get(i)
                                         .generate(
-                                            new LootContext(lootTableSeed, otg.getVersion())));
-                                }
+                                                new LootContext(lootTableSeed, otg.getVersion())));
                             }
                         }
                     }
